@@ -62,6 +62,13 @@ void appendText(TextStorage *storage, const char *text) {
         storage->lines[currentLineIndex].length += newLength;
     }
 }
+void startNewLine(TextStorage *storage) {
+    storage->numLines++;
+    storage->lines = (Line *)realloc(storage->lines, sizeof(Line) * storage->numLines);
+    storage->lines[storage->numLines - 1].text = NULL;
+    storage->lines[storage->numLines - 1].length = 0;
+}
+
 
 int main() {
     int choice;
@@ -84,6 +91,10 @@ int main() {
                 fgets(inputBuffer, sizeof(inputBuffer), stdin);
                 inputBuffer[strcspn(inputBuffer, "\n")] = '\0';
                 appendText(&storage, inputBuffer);
+
+                break;
+            case 2:
+                startNewLine(&storage);
                 break;
                 default:
                     printf("The command is not implemented.\n");
