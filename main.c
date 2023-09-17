@@ -49,7 +49,6 @@ void appendText(TextStorage *storage, const char *text) {
     size_t currentLineIndex = storage->numLines - 1;
 
     if (storage->lines == NULL) {
-        // Initialize the first line
         storage->lines = (Line *)malloc(sizeof(Line));
         storage->numLines = 1;
         storage->lines[0].text = (char *)malloc(newLength + 1);
@@ -67,6 +66,32 @@ void startNewLine(TextStorage *storage) {
     storage->lines = (Line *)realloc(storage->lines, sizeof(Line) * storage->numLines);
     storage->lines[storage->numLines - 1].text = NULL;
     storage->lines[storage->numLines - 1].length = 0;
+}
+
+void saveTextToFile(const TextStorage *storage, const char *filename) {
+    FILE *file = fopen(filename, "w");
+    if (file != NULL) {
+        for (size_t i = 0; i < storage->numLines; i++) {
+            fprintf(file, "%s\n", storage->lines[i].text);
+        }
+        fclose(file);
+        printf("Text saved to %s\n", filename);
+    } else {
+        printf("Error: Unable to open file for writing.\n");
+    }
+}
+void loadTextFromFile(TextStorage *storage, const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file != NULL) {
+        char buffer[256];
+        while (fgets(buffer, sizeof(buffer), file) != NULL) {
+            appendText(storage, buffer);
+        }
+        fclose(file);
+        printf("Text loaded from %s\n", filename);
+    } else {
+        printf("Error: Unable to open file for reading.\n");
+    }
 }
 
 
@@ -91,10 +116,40 @@ int main() {
                 fgets(inputBuffer, sizeof(inputBuffer), stdin);
                 inputBuffer[strcspn(inputBuffer, "\n")] = '\0';
                 appendText(&storage, inputBuffer);
-
                 break;
             case 2:
                 startNewLine(&storage);
+                break;
+            case 3:
+                printf("Choose an action:\n");
+                printf("1. Load text from a file\n");
+                printf("2. Save text to a file\n");
+                printf("0. Back to the main menu\n");
+                printf("Enter your choice: ");
+                int fileAction;
+                scanf("%d", &fileAction);
+                getchar();
+
+                switch (fileAction) {
+                    case 0:
+                        break;
+                    case 1:
+                        printf("Enter the filename to load: ");
+                        char loadFilename[256];
+                        fgets(loadFilename, sizeof(loadFilename), stdin);
+                        loadFilename[strcspn(loadFilename, "\n")] = '\0';
+                        loadTextFromFile(&storage, loadFilename);
+                        break;
+                    case 2:
+                        printf("Enter the filename to save: ");
+                        char saveFilename[256];
+                        fgets(saveFilename, sizeof(saveFilename), stdin);
+                        saveFilename[strcspn(saveFilename, "\n")] = '\0';
+                        saveTextToFile(&storage, saveFilename);
+                        break;
+                    default:
+                        printf("Invalid choice for file action.\n");
+                }
                 break;
                 default:
                     printf("The command is not implemented.\n");
