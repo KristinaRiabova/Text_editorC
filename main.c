@@ -93,6 +93,14 @@ void loadTextFromFile(TextStorage *storage, const char *filename) {
         printf("Error: Unable to open file for reading.\n");
     }
 }
+void printTextCharacterByCharacter(const TextStorage *storage) {
+    for (size_t i = 0; i < storage->numLines; i++) {
+        for (size_t j = 0; j < storage->lines[i].length; j++) {
+            printf("%c", storage->lines[i].text[j]);
+        }
+        printf("\n");
+    }
+}
 
 
 int main() {
@@ -150,6 +158,10 @@ int main() {
                     default:
                         printf("Invalid choice for file action.\n");
                 }
+                break;
+            case 4:
+                printf("Current Text:\n");
+                printTextCharacterByCharacter(&storage);
                 break;
                 default:
                     printf("The command is not implemented.\n");
