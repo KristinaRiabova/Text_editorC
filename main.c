@@ -106,17 +106,28 @@ void insertSubstring(TextStorage *storage, size_t lineIndex, size_t symbolIndex,
     size_t lineLength = storage->lines[lineIndex].length;
     size_t totalLength = lineLength + substringLength;
 
-    // Reallocate memory to accommodate the new substring
     storage->lines[lineIndex].text = (char *)realloc(storage->lines[lineIndex].text, totalLength + 1);
 
-    // Shift the existing data to make space for the new substring
     memmove(storage->lines[lineIndex].text + symbolIndex + substringLength, storage->lines[lineIndex].text + symbolIndex, lineLength - symbolIndex + 1);
 
-    // Insert the substring at the specified position
     memcpy(storage->lines[lineIndex].text + symbolIndex, substring, substringLength);
 
-    // Update the length of the line
     storage->lines[lineIndex].length = totalLength;
+}
+void searchForSubstring(const TextStorage *storage, const char *substring) {
+    size_t substringLength = strlen(substring);
+
+    for (size_t i = 0; i < storage->numLines; i++) {
+        char *lineText = storage->lines[i].text;
+        size_t lineLength = storage->lines[i].length;
+
+        for (size_t j = 0; j <= lineLength - substringLength; j++) {
+            if (strncmp(lineText + j, substring, substringLength) == 0) {
+
+                printf("Found at Line %zu, Position %zu: %s\n", i + 1, j + 1, lineText + j);
+            }
+        }
+    }
 }
 
 
@@ -184,21 +195,29 @@ int main() {
                 printf("Enter the line index: ");
                 size_t lineIndex;
                 scanf("%zu", &lineIndex);
-                getchar(); // Поглотить символ новой строки
+                getchar();
 
                 printf("Enter the symbol index: ");
                 size_t symbolIndex;
                 scanf("%zu", &symbolIndex);
-                getchar(); // Поглотить символ новой строки
+                getchar();
 
                 printf("Enter the substring to insert: ");
                 char insertion[256];
                 fgets(insertion, sizeof(insertion), stdin);
-                insertion[strcspn(insertion, "\n")] = '\0'; // Удаление символа новой строки
+                insertion[strcspn(insertion, "\n")] = '\0';
 
                 insertSubstring(&storage, lineIndex, symbolIndex, insertion);
                 break;
-                default:
+            case 6:
+                printf("Enter the substring to search for: ");
+                char searchSubstring[256];
+                fgets(searchSubstring, sizeof(searchSubstring), stdin);
+                searchSubstring[strcspn(searchSubstring, "\n")] = '\0';
+                searchForSubstring(&storage, searchSubstring);
+                break;
+
+            default:
                     printf("The command is not implemented.\n");
         }
     } while (choice != 0);
