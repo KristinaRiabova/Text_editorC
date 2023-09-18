@@ -101,6 +101,23 @@ void printTextCharacterByCharacter(const TextStorage *storage) {
         printf("\n");
     }
 }
+void insertSubstring(TextStorage *storage, size_t lineIndex, size_t symbolIndex, const char *substring) {
+    size_t substringLength = strlen(substring);
+    size_t lineLength = storage->lines[lineIndex].length;
+    size_t totalLength = lineLength + substringLength;
+
+    // Reallocate memory to accommodate the new substring
+    storage->lines[lineIndex].text = (char *)realloc(storage->lines[lineIndex].text, totalLength + 1);
+
+    // Shift the existing data to make space for the new substring
+    memmove(storage->lines[lineIndex].text + symbolIndex + substringLength, storage->lines[lineIndex].text + symbolIndex, lineLength - symbolIndex + 1);
+
+    // Insert the substring at the specified position
+    memcpy(storage->lines[lineIndex].text + symbolIndex, substring, substringLength);
+
+    // Update the length of the line
+    storage->lines[lineIndex].length = totalLength;
+}
 
 
 int main() {
@@ -162,6 +179,24 @@ int main() {
             case 4:
                 printf("Current Text:\n");
                 printTextCharacterByCharacter(&storage);
+                break;
+            case 5:
+                printf("Enter the line index: ");
+                size_t lineIndex;
+                scanf("%zu", &lineIndex);
+                getchar(); // Поглотить символ новой строки
+
+                printf("Enter the symbol index: ");
+                size_t symbolIndex;
+                scanf("%zu", &symbolIndex);
+                getchar(); // Поглотить символ новой строки
+
+                printf("Enter the substring to insert: ");
+                char insertion[256];
+                fgets(insertion, sizeof(insertion), stdin);
+                insertion[strcspn(insertion, "\n")] = '\0'; // Удаление символа новой строки
+
+                insertSubstring(&storage, lineIndex, symbolIndex, insertion);
                 break;
                 default:
                     printf("The command is not implemented.\n");
