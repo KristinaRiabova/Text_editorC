@@ -50,13 +50,28 @@ void appendText(TextStorage *storage, const char *text) {
 
     if (storage->lines == NULL) {
         storage->lines = (Line *)malloc(sizeof(Line));
+        if (storage->lines == NULL) {
+            printf("Memory allocation failed.\n");
+            return;
+        }
         storage->numLines = 1;
         storage->lines[0].text = (char *)malloc(newLength + 1);
+        if (storage->lines[0].text == NULL) {
+            printf("Memory allocation failed.\n");
+            free(storage->lines);
+            storage->lines = NULL;
+            return;
+        }
         strcpy(storage->lines[0].text, text);
         storage->lines[0].length = newLength;
     } else if (currentLineIndex < storage->numLines) {
         size_t currentLength = storage->lines[currentLineIndex].length;
-        storage->lines[currentLineIndex].text = (char *)realloc(storage->lines[currentLineIndex].text, currentLength + newLength + 1);
+        char *newText = (char *)realloc(storage->lines[currentLineIndex].text, currentLength + newLength + 1);
+        if (newText == NULL) {
+            printf("Memory allocation failed.\n");
+            return;
+        }
+        storage->lines[currentLineIndex].text = newText;
         strcat(storage->lines[currentLineIndex].text, text);
         storage->lines[currentLineIndex].length += newLength;
     }
@@ -106,12 +121,15 @@ void insertSubstring(TextStorage *storage, size_t lineIndex, size_t symbolIndex,
     size_t lineLength = storage->lines[lineIndex].length;
     size_t totalLength = lineLength + substringLength;
 
-    storage->lines[lineIndex].text = (char *)realloc(storage->lines[lineIndex].text, totalLength + 1);
-
-    memmove(storage->lines[lineIndex].text + symbolIndex + substringLength, storage->lines[lineIndex].text + symbolIndex, lineLength - symbolIndex + 1);
-
+    char *newText = (char *)realloc(storage->lines[lineIndex].text, totalLength + 1);
+    if (newText == NULL) {
+        printf("Memory allocation failed.\n");
+        return;
+    }
+    storage->lines[lineIndex].text = newText;
+    memmove(storage->lines[lineIndex].text + symbolIndex + substringLength,
+            storage->lines[lineIndex].text + symbolIndex, lineLength - symbolIndex + 1);
     memcpy(storage->lines[lineIndex].text + symbolIndex, substring, substringLength);
-
     storage->lines[lineIndex].length = totalLength;
 }
 void searchForSubstring(const TextStorage *storage, const char *substring) {
@@ -138,10 +156,10 @@ int main() {
 
     do {
         printHelp();
+
         printf("Choose the command: ");
         scanf("%d", &choice);
         getchar();
-
         switch (choice) {
             case 0:
                 printf("Exiting the text editor.\n");
@@ -194,14 +212,20 @@ int main() {
             case 5:
                 printf("Enter the line index: ");
                 size_t lineIndex;
-                scanf("%zu", &lineIndex);
+                if (scanf("%zu", &lineIndex) != 1 || lineIndex >= storage.numLines) {
+                    printf("Invalid line index. Please enter a valid index.\n");
+                    getchar();
+                    break;
+                }
                 getchar();
-
                 printf("Enter the symbol index: ");
                 size_t symbolIndex;
-                scanf("%zu", &symbolIndex);
+                if (scanf("%zu", &symbolIndex) != 1 || symbolIndex > storage.lines[lineIndex].length) {
+                    printf("Invalid symbol index. Please enter a valid index.\n");
+                    getchar();
+                    break;
+                }
                 getchar();
-
                 printf("Enter the substring to insert: ");
                 char insertion[256];
                 fgets(insertion, sizeof(insertion), stdin);
@@ -209,6 +233,7 @@ int main() {
 
                 insertSubstring(&storage, lineIndex, symbolIndex, insertion);
                 break;
+
             case 6:
                 printf("Enter the substring to search for: ");
                 char searchSubstring[256];
@@ -218,7 +243,7 @@ int main() {
                 break;
 
             default:
-                    printf("The command is not implemented.\n");
+                printf("The command is not implemented.\n");
         }
     } while (choice != 0);
 
