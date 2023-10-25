@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <dlfcn.h>
+
+
 typedef struct {
     char *text;
     size_t length;
@@ -13,6 +16,8 @@ typedef struct {
     size_t numLines;
 } TextStorage;
 
+typedef char* (*EncryptFunction)(char*, int);
+typedef char* (*DecryptFunction)(char*, int);
 
 
 
@@ -24,7 +29,8 @@ void printHelp() {
     printf("4. Print the current text to console\n");
     printf("5. Insert text by line and symbol index\n");
     printf("6. Search for text\n");
-    printf("7. Clear the console (optional)\n");
+    printf("7. Encrypt\n");
+    printf("8. Decrypt\n");
     printf("0. Exit\n");
 }
 
@@ -147,16 +153,39 @@ void searchForSubstring(const TextStorage *storage, const char *substring) {
         }
     }
 }
+void encryptText(TextStorage *storage, int key, EncryptFunction encryptFunction) {
+    for (size_t i = 0; i < storage->numLines; i++) {
+        storage->lines[i].text = encryptFunction(storage->lines[i].text, key);
+    }
+}
 
-
+void decryptText(TextStorage *storage, int key, DecryptFunction decryptFunction) {
+    for (size_t i = 0; i < storage->numLines; i++) {
+        storage->lines[i].text = decryptFunction(storage->lines[i].text, key);
+    }
+}
+void clear_console(){
+    system("clear");
+}
 int main() {
+    void* handle = dlopen("/Users/kristina_mbp/CLionProjects/CaesarEncryptionAlgorithm/caesar.dylib", RTLD_LAZY);
+    EncryptFunction encryptFunction = (EncryptFunction)dlsym(handle, "encrypt");
+    DecryptFunction decryptFunction = (DecryptFunction)dlsym(handle, "decrypt");
+
+    if (!handle || !encryptFunction || !decryptFunction) {
+        printf("Error loading the library or functions.\n");
+        return 1;
+    }
+
     int choice;
     TextStorage storage = initializeTextStorage();
     char inputBuffer[256];
+    int encryptKey = 0;
+    int decryptKey = 0;
 
     do {
         printHelp();
-
+        clear_console();
         printf("Choose the command: ");
         scanf("%d", &choice);
         getchar();
@@ -173,6 +202,7 @@ int main() {
                 break;
             case 2:
                 startNewLine(&storage);
+                printf("New line is started.\n");
                 break;
             case 3:
                 printf("Choose an action:\n");
@@ -241,11 +271,28 @@ int main() {
                 searchSubstring[strcspn(searchSubstring, "\n")] = '\0';
                 searchForSubstring(&storage, searchSubstring);
                 break;
+            case 7:
+
+                printf("Enter the encryption key: ");
+                scanf("%d", &encryptKey);
+                getchar();
+                encryptText(&storage, encryptKey, encryptFunction);
+                printf("Text encrypted with key: %d\n", encryptKey);
+                break;
+            case 8:
+
+                printf("Enter the decryption key: ");
+                scanf("%d", &decryptKey);
+                getchar();
+                decryptText(&storage, decryptKey, decryptFunction);
+                printf("Text decrypted with key: %d\n", decryptKey);
+                break;
+
 
             default:
                 printf("The command is not implemented.\n");
         }
     } while (choice != 0);
-
+    dlclose(handle);
     return 0;
 }
